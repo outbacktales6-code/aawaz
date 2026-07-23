@@ -66,16 +66,12 @@ export const saveMessage = async (db, message) => {
     message.reply_to_id || null
   ];
 
-  return new Promise((resolve, reject) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        insertQuery,
-        params,
-        (tx, results) => resolve(results.rowsAffected > 0),
-        (tx, error) => reject(error)
-      );
-    });
-  });
+  try {
+    const [results] = await db.executeSql(insertQuery, params);
+    return results.rowsAffected > 0;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const getMessages = async (db, limit = 50, offset = 0) => {
