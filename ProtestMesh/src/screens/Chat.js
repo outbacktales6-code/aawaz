@@ -39,19 +39,30 @@ export default function Chat() {
 
   const handleSend = async () => {
     try {
-      if (!inputText.trim()) return;
+      console.log('--- handleSend START ---');
+      console.log('inputText:', inputText);
+      if (!inputText.trim()) {
+        console.log('Input is empty, returning early');
+        return;
+      }
+      
+      console.log('Calling meshEngine.sendMessage...');
       const sentMsg = await meshEngine.sendMessage(inputText, false, replyTo ? replyTo.id : null);
+      console.log('meshEngine.sendMessage returned:', sentMsg);
       
       if (sentMsg === null) {
+        console.log('Message was blocked by profanity filter');
         Alert.alert('Message Blocked', 'Your message contained explicit content which is blocked on this network.');
         return;
       }
       
+      console.log('Clearing input text...');
       setInputText('');
       setReplyTo(null);
       loadMessages();
+      console.log('--- handleSend DONE ---');
     } catch (e) {
-      console.error('Send Error:', e);
+      console.error('Send Error Catch Block:', e);
       Alert.alert('Send Error', e.message || String(e));
     }
   };
