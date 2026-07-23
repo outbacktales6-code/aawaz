@@ -1,4 +1,18 @@
 import SQLite from 'react-native-sqlite-storage';
+
+// Polyfill for crypto.getRandomValues to prevent CryptoJS crash in React Native
+if (typeof global.crypto !== 'object') {
+  global.crypto = {};
+}
+if (typeof global.crypto.getRandomValues !== 'function') {
+  global.crypto.getRandomValues = function (array) {
+    for (let i = 0; i < array.length; i++) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+    return array;
+  };
+}
+
 const CryptoJS = require('crypto-js');
 
 const SECRET_KEY = 'awaaz_mesh_secure_vault_2026_x!92';
