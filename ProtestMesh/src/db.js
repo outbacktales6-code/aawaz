@@ -1,9 +1,29 @@
 import SQLite from 'react-native-sqlite-storage';
+const CryptoJS = require('crypto-js');
 
-SQLite.enablePromise(true);
+const SECRET_KEY = 'awaaz_mesh_secure_vault_2026_x!92';
+
+const encrypt = (text) => CryptoJS.AES.encrypt(text || '', SECRET_KEY).toString();
+const decrypt = (cipher) => {
+  try {
+    const bytes = CryptoJS.AES.decrypt(cipher || '', SECRET_KEY);
+    if (!bytes) return '*** Encrypted ***';
+    const text = bytes.toString(CryptoJS.enc.Utf8);
+    return text || '*** Encrypted ***';
+  } catch (e) {
+    return '*** Encrypted ***';
+  }
+};
 
 export const getDBConnection = async () => {
+  SQLite.enablePromise(true);
   return SQLite.openDatabase({name: 'awaaz-mesh.db', location: 'default'});
+};
+
+export const deleteOldMessages = async (db) => {
+  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+  const query = `DELETE FROM messages WHERE timestamp < ?`;
+  await db.executeSql(query, [oneDayAgo]);
 };
 
 export const createTables = async (db) => {
@@ -20,6 +40,13 @@ export const createTables = async (db) => {
     );
   `;
   await db.executeSql(query);
+  await db.executeSql(`CREATE INDEX IF NOT EXISTS idx_timestamp ON messages(timestamp);`);
+  await deleteOldMessages(db);
+};
+
+export const wipeDatabase = async (db) => {
+  await db.executeSql(`DROP TABLE IF EXISTS messages;`);
+  await createTables(db);
 };
 
 export const saveMessage = async (db, message) => {
@@ -31,8 +58,8 @@ export const saveMessage = async (db, message) => {
   const params = [
     message.id,
     message.sender_id,
-    message.sender_name,
-    message.content,
+    encrypt(message.sender_name),
+    encrypt(message.content),
     message.timestamp,
     message.is_sos ? 1 : 0,
     JSON.stringify(message.reactions || {}),
@@ -48,6 +75,8 @@ export const getMessages = async (db, limit = 50, offset = 0) => {
   let messages = [];
   for (let i = 0; i < results.rows.length; i++) {
     const row = results.rows.item(i);
+    row.sender_name = decrypt(row.sender_name);
+    row.content = decrypt(row.content);
     row.reactions = JSON.parse(row.reactions || '{}');
     row.is_sos = row.is_sos === 1;
     messages.push(row);
@@ -55,8 +84,3 @@ export const getMessages = async (db, limit = 50, offset = 0) => {
   return messages;
 };
 
-export const deleteOldMessages = async (db) => {
-  const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-  const query = `DELETE FROM messages WHERE timestamp < ?`;
-  await db.executeSql(query, [oneDayAgo]);
-};
