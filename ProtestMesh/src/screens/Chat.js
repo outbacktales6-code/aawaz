@@ -126,6 +126,7 @@ export default function Chat() {
         renderItem={renderItem}
         inverted // Chat apps usually load from bottom up
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
       />
 
       <View style={styles.inputContainer}>
