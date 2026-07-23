@@ -65,8 +65,17 @@ export const saveMessage = async (db, message) => {
     JSON.stringify(message.reactions || {}),
     message.reply_to_id || null
   ];
-  const [results] = await db.executeSql(insertQuery, params);
-  return results.rowsAffected > 0; // true if new message (not duplicate)
+
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        insertQuery,
+        params,
+        (tx, results) => resolve(results.rowsAffected > 0),
+        (tx, error) => reject(error)
+      );
+    });
+  });
 };
 
 export const getMessages = async (db, limit = 50, offset = 0) => {

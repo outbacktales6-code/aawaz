@@ -145,6 +145,9 @@ export default function Chat() {
             placeholderTextColor="#666"
             value={inputText}
             onChangeText={setInputText}
+            onSubmitEditing={handleSend}
+            returnKeyType="send"
+            blurOnSubmit={false}
           />
           <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
             <Text style={styles.sendText}>➤</Text>
